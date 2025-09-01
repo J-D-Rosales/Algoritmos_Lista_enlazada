@@ -1,83 +1,93 @@
-# include <iostream>
-// We'll do some linked list excercises.
+#include <iostream>
 using namespace std;
 
+template <typename T>
 struct Node {
-    int data;
+    T data;
     Node* next;
 
-    Node(int d) {
+    Node(T d) {
         data = d;
-        next = NULL;
+        next = nullptr;
     }
 
     ~Node() = default;
 };
 
+template <typename T = int>
 class List {
-    private:
-    Node* head;
-    public:
+private:
+    Node<T>* head;
+
+public:
     List() : head(nullptr) {}
 
-    Node* getHead() {
+    Node<T>* getHead() {
         return head;
     }
 
-    int front() {
+    T front() {
         return head->data;
     }
-    int back() {
-        Node* temp = head;
-        while (temp->next != NULL) {
+
+    T back() {
+        Node<T>* temp = head;
+        while(temp->next != nullptr) {
             temp = temp->next;
         }
         return temp->data;
     }
 
-    void pushFront(int numerito) {
-        Node* nuevoNode = new Node(numerito);
-        nuevoNode->next = head;
-        head = nuevoNode;
+    void pushFront(T value) {
+        Node<T>* newNode = new Node<T>(value);
+        newNode->next = head;
+        head = newNode;
     }
 
-    void pushBack(int numerito) {
-        Node* nodo = new Node(numerito);
-        if (!head) { head = nodo; return; }
-        Node* temp = head;
-        while (temp->next != NULL) {
+    void pushBack(T value) {
+        Node<T>* node = new Node<T>(value);
+        if(!head) {
+            head = node;
+            return;
+        }
+        Node<T>* temp = head;
+        while(temp->next != nullptr) {
             temp = temp->next;
         }
-        temp->next = nodo;
-        nodo->next = NULL;
+        temp->next = node;
+        node->next = nullptr;
     }
 
     void popFront() {
-        if (!head) return;
-        if (head->next == NULL) {
+        if(!head) return;
+        if(head->next == nullptr) {
             delete head;
-            head = NULL;
+            head = nullptr;
         }
-        Node* temp = head;
+        Node<T>* temp = head;
         head = head->next;
         delete temp;
     }
 
     void popBack() {
-        Node *temp = head;
+        Node<T>* temp = head;
         if (!head) return;
-        if (!head->next) { delete head; head = nullptr; return; }
-        while (temp->next->next != NULL) {
+        if (!head->next) {
+            delete head;
+            head = nullptr;
+            return;
+        }
+        while(temp->next->next != nullptr) {
             temp = temp->next;
         }
         delete temp->next;
-        temp->next = NULL;
+        temp->next = nullptr;
     }
 
-    int operator[](int pos) {
-        Node* temp = head;
+    T operator[](int pos) {
+        Node<T>* temp = head;
         int i = 0;
-        while (i++ < pos) {
+        while(i++ < pos) {
             temp = temp->next;
         }
         return temp->data;
@@ -88,9 +98,9 @@ class List {
     }
 
     int size() {
-        Node* temp = head;
+        Node<T>* temp = head;
         int i = 0;
-        while (temp != NULL) {
+        while(temp != nullptr) {
             i++;
             temp = temp->next;
         }
@@ -98,135 +108,108 @@ class List {
     }
 
     void clear() {
-        while (head != NULL) {
-            Node* temp = head;
+        while(head != nullptr) {
+            Node<T>* temp = head;
             head = head->next;
             delete temp;
         }
     }
 
-    void sort() {
-        if (!head || !head->next) return;
-        while (isOdered() == false) {
-            Node* t = head;
-            int contador = 0;
-            while ( t != NULL && t->next != NULL ) {
-                if (t->data > t->next->data) {
-                    swamp(contador);
-                }
-                t = t->next;
-                contador++;
-            }
+    Node<T>* merge(Node<T>* a, Node<T>* b) {
+        if(!a) return b;
+        if(!b) return a;
+        if(a->data <= b->data) {
+            a->next = merge(a->next, b);
+            return a;
+        } else {
+            b->next = merge(a, b->next);
+            return b;
         }
     }
 
-    void reverse() {
-        Node* prev = nullptr;
-        Node* curr = head;
-        Node* next = nullptr;
+    Node<T>* mergeSort(Node<T>* current) {
+        if (!current || !current->next) return current;
+        Node<T>* slow = current;
+        Node<T>* fast = current->next;
+        while(fast && fast->next) {
+            slow = slow->next;
+            fast = fast->next->next;
+        }
+        Node<T>* mid = slow->next;
+        slow->next = nullptr;
+        Node<T>* left = mergeSort(current);
+        Node<T>* right = mergeSort(mid);
+        return merge(left, right);
+    }
 
-        while (curr != nullptr) {
+    void sort() {
+        head = mergeSort(head);
+    }
+
+    void reverse() {
+        Node<T>* prev = nullptr;
+        Node<T>* curr = head;
+        Node<T>* next = nullptr;
+        while(curr != nullptr) {
             next = curr->next;
             curr->next = prev;
             prev = curr;
             curr = next;
         }
-
         head = prev;
     }
 
-    void insert (int pos, int num) {
-        Node * nodo = new Node(num);
-        Node* temp = head;
+    void insert(int pos, T num) {
+        Node<T>* nodo = new Node<T>(num);
+        Node<T>* temp = head;
         int i = 0;
-        while (i++  < pos -1) {
+        while(i++ < pos - 1) {
             temp = temp->next;
         }
         nodo->next = temp->next;
         temp->next = nodo;
     }
 
-    friend ostream& operator<<(ostream& os, const List& l) {
-        Node* temp = l.head;
-        while (temp != NULL) {
-            os << temp->data << " " << endl;
-            temp = temp->next;
-        }
-        return os;
+    ~List() { clear(); }
+
+    template<typename T_>
+    friend ostream& operator<<(ostream& os, const List<T_> &l);
+};
+
+
+template<typename T>
+ostream& operator<<(ostream &os, const List<T> &l) {
+    Node<T>* temp = l.head;
+    while (temp != nullptr) {
+        os << temp->data << " ";
+        temp = temp->next;
     }
-
-    void swamp(int i) {
-        int si = size();
-        if (i > si -2) {
-            return;
-            cout << "Error: No se coloco bien las constantes"<<endl;
-        }
-
-        if ( i == 0) {
-            Node* t1 = head;
-            Node* t2 = head->next;
-            Node* t3 = head->next->next;
-            t2->next = t1;
-            t1->next = t3;
-            head = t2;
-        }
-        else {
-            Node* t1 = head;
-            int var = 1;
-            while (var++ < i) {
-                t1 = t1->next;
-            }
-            Node* t2 = t1->next;
-            Node* t3 = t2->next;
-            t2->next = t3->next;
-            t3->next = t2;
-            t1->next = t3;
-        }
-    }
-
-    bool isOdered() {
-        if (!head || !head->next) return true;
-        Node* t = head;
-        while (t->next) {
-            if (t->data > t->next->data) return false;
-            t = t->next;
-        }
-        return true;
-    }
-
-    ~List() = default;
-
-    };
-
-    bool f() {
-        return true;
-    }
+    return os;
+}
 
 int main () {
-        List l1;
-        l1.pushFront(30);
-        l1.pushBack(50);
-        l1.pushFront(20);
-        l1.pushFront(10);
-        l1.pushBack(40);
+    List<int> l1;
+    l1.pushFront(30);
+    l1.pushBack(50);
+    l1.pushFront(20);
+    l1.pushFront(10);
+    l1.pushBack(40);
 
-        cout << "-------------" << endl;
+    cout << "-------------" << endl;
 
-        cout << l1;
-        l1.sort();
-        cout << "Order: ---" << endl;
-        cout << l1.isOdered() << endl;
-        cout << "Tamaño de lista: " << l1.size() << endl;
+    cout << l1 << "\n";
+    cout << "Ordered: ---" << endl;
+    l1.sort();
+    cout << l1 << "\n";
 
-        cout << "El valor en la posicion 2:" << endl;
-        cout << l1[2] << endl;
+    cout << "Tamaño de lista: " << l1.size() << endl;
 
+    cout << "El valor en la posicion 2:" << endl;
+    cout << l1[2] << endl;
 
+    l1.reverse();
+    cout << "Reverse: ---" << endl;
+    cout << l1 << "\n";
 
-
-        l1.reverse();
-        cout << "Reverse: ---" << endl;
-        cout << l1;
-
-
+    return 0;
 }
